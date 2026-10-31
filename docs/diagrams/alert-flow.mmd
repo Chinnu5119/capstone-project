@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as React dashboard
+    participant API as Backend API
+    participant DB as PostgreSQL
+    participant P as Prometheus
+    participant AM as Alertmanager
+    participant N as Slack / Teams
+
+    User->>UI: Create rule, e.g. daily cost above $520
+    UI->>API: POST /api/alerts/rules
+    API->>DB: Store rule
+    loop every 30 s
+        P->>API: GET /metrics
+        API->>DB: Evaluate each enabled rule against current data
+        API-->>P: devops_alert_rule_breached{rule_id, severity} 0 or 1
+    end
+    Note over P: Breached for 2 minutes: DashboardRuleBreached fires
+    P->>AM: Alert (labels carry rule_id)
+    Note over AM: Group, de-duplicate, repeat every 4 h
+    AM->>API: POST /api/alerts/webhook
+    API->>DB: Record alert event (firing)
+    API->>N: Formatted message with value and threshold
+    User->>UI: Delete or disable the rule
+    Note over P: Metric disappears, alert resolves
+    P->>AM: Resolved
+    AM->>API: POST /api/alerts/webhook (resolved)
+    API->>DB: Set ends_at, status resolved
+    API->>N: Resolved message

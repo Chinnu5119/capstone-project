@@ -1,0 +1,66 @@
+erDiagram
+    COST_RECORDS {
+        date date
+        string provider
+        string account
+        string service
+        string resource_type
+        string environment
+        string region
+        decimal cost
+        string currency
+    }
+    RESOURCES {
+        string provider
+        string resource_id
+        string name
+        string service
+        string resource_type
+        string size
+        string environment
+        string region
+        string state
+        decimal monthly_cost
+        float cpu_pct
+    }
+    UTILIZATION_RECORDS {
+        date date
+        string provider
+        string resource_id
+        float cpu_avg
+        float cpu_max
+        float mem_avg
+    }
+    ALERT_RULES {
+        int id
+        string name
+        string rule_type
+        string provider
+        string environment
+        string resource_type
+        float threshold
+        string severity
+        bool enabled
+    }
+    ALERT_EVENTS {
+        string fingerprint
+        int rule_id
+        string status
+        string severity
+        string summary
+        float value
+        float threshold
+        datetime starts_at
+        datetime ends_at
+        bool notified
+    }
+    COLLECTION_RUNS {
+        string provider
+        string mode
+        string status
+        int cost_rows
+        int resource_rows
+        string error
+    }
+    RESOURCES ||--o{ UTILIZATION_RECORDS : "daily CPU history"
+    ALERT_RULES ||--o{ ALERT_EVENTS : "fires"
