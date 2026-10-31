@@ -1,4 +1,4 @@
-# DevOps Dashboard for Resource and Cost Monitoring
+# DevOps Dashboard for Resource and Cost Monitoring System
 
 One dashboard for spend and resource utilisation across **AWS, Azure and GCP**: real-time and
 historical charts, filters by cloud / environment / resource type, user-defined alerts that
