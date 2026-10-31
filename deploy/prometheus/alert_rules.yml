@@ -1,0 +1,41 @@
+groups:
+  # One generic rule covers every rule users create in the dashboard. The backend exports
+  # devops_alert_rule_breached{rule_id=...,severity=...} per enabled rule, so adding,
+  # editing or deleting a rule in the UI needs no change to this file and no Prometheus reload.
+  - name: dashboard-user-rules
+    rules:
+      - alert: DashboardRuleBreached
+        expr: devops_alert_rule_breached == 1
+        for: 2m
+        labels:
+          source: dashboard
+        annotations:
+          summary: "{{ $labels.rule_name }} is over its threshold"
+
+  # Fixed platform-health rules.
+  - name: pipeline-health
+    rules:
+      - alert: CostCollectionStale
+        expr: time() - devops_last_collection_success_timestamp_seconds > 6 * 3600 * 2
+        for: 10m
+        labels:
+          severity: warning
+          source: platform
+        annotations:
+          summary: "No successful {{ $labels.provider }} cost collection for over 12 hours"
+      - alert: CostAnomalyDetected
+        expr: devops_cost_anomalies > 0
+        for: 5m
+        labels:
+          severity: critical
+          source: platform
+        annotations:
+          summary: "Unusual {{ $labels.provider }} spend detected in the last 3 days"
+      - alert: DashboardDown
+        expr: up{job="devops-dashboard"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          source: platform
+        annotations:
+          summary: "The dashboard backend is not reachable by Prometheus"

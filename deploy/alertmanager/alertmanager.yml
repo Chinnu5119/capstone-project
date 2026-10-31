@@ -1,0 +1,20 @@
+# Alertmanager groups, de-duplicates and rate-limits alerts, then hands them to the dashboard
+# backend, which records history and posts to Slack and/or Microsoft Teams. The webhook URLs
+# live in the backend's .env (SLACK_WEBHOOK_URL / TEAMS_WEBHOOK_URL), not in this file.
+route:
+  receiver: dashboard
+  group_by: [alertname, rule_id, provider]
+  group_wait: 10s
+  group_interval: 2m
+  repeat_interval: 4h
+
+receivers:
+  - name: dashboard
+    webhook_configs:
+      - url: http://backend:8000/api/alerts/webhook
+        send_resolved: true
+        # If WEBHOOK_TOKEN is set in .env, uncomment and put the same value here:
+        # http_config:
+        #   authorization:
+        #     type: Bearer
+        #     credentials: change-me

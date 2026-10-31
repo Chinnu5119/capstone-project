@@ -1,0 +1,10 @@
+.env
+secrets/*
+!secrets/.gitkeep
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.db
+.pytest_cache/
+.venv/
