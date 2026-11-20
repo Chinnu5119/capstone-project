@@ -1,0 +1,19 @@
+# Requires the AWS Load Balancer Controller on the cluster. It creates one public Application Load Balancer.
+# The dashboard has NO login, so the ALB is limited to trusted IPs. Edit inbound-cidrs (or add ACM/HTTPS).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashboard
+  namespace: devops-dashboard
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0      # <-- replace with your IP, e.g. 203.0.113.7/32
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: frontend, port: { number: 80 } } } }

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata: { name: backend, namespace: devops-dashboard }
+spec:
+  selector: { app: backend }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: backend, namespace: devops-dashboard }
+spec:
+  replicas: 1            # must stay 1: the scheduler runs inside the process (see docs/ARCHITECTURE.md)
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: backend } }
+  template:
+    metadata:
+      labels: { app: backend }
+    spec:
+      containers:
+        - name: backend
+          image: ${ECR_REGISTRY}/devops-dashboard/backend:${IMAGE_TAG}
+          ports: [{ containerPort: 8000 }]
+          envFrom:
+            - secretRef: { name: dashboard-env }     # created from .env, see docs/DEPLOYMENT.md
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: dashboard-env, key: POSTGRES_PASSWORD } }
+            - name: DATABASE_URL                      # $(VAR) is expanded by Kubernetes
+              value: postgresql+psycopg2://dashboard:$(POSTGRES_PASSWORD)@db:5432/dashboard
+          readinessProbe:
+            httpGet: { path: /api/health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          # Optional GCP key:  kubectl -n devops-dashboard create secret generic gcp-key --from-file=gcp.json
+          # then uncomment the volume lines below and set GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp.json
+          # volumeMounts: [{ name: gcp-key, mountPath: /secrets, readOnly: true }]
+      # volumes: [{ name: gcp-key, secret: { secretName: gcp-key, optional: true } }]
